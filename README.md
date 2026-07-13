@@ -61,11 +61,13 @@ direktno u aplikaciji i izvezti `pricing.js`.
 
 ## Logo
 
-Trenutni logo je **verna vektorska rekonstrukcija** ECS znaka (šofer, četiri zlatne
-zvezdice, „ECS" natpis) — originalni fajl nije bio dostupan u okruženju. Za tačan
-originalni logo, pošaljite fajl (PNG/SVG) i biće ugrađen 1:1 (kao `data:` URI,
-bez spoljnih zavisnosti). Logo se pojavljuje na dva mesta u `index.html`
-(zaglavlje aplikacije i zaglavlje ponude).
+Koristi se **originalni ECS logo** (ugrađen u `index.html` kao `data:` URI, bez
+spoljnih zavisnosti — aplikacija ostaje jedan samostalan fajl). Izvorni fajl
+je `ecs-logo.webp` (isečena, transparentna verzija). Logo se prikazuje u
+zaglavlju aplikacije i kao memorandum na ponudi.
+
+Za zamenu logotipa: zamenite `ecs-logo.webp`, iskodirajte ga u base64 i
+zamenite vrednost konstante `ECS_LOGO` u `index.html`.
 
 ## Napomena o godini
 
