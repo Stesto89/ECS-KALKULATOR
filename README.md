@@ -28,16 +28,36 @@ u isti direktorijum.
 | `index.html` | Kompletna aplikacija (UI + logika). |
 | `pricing.js` | Podaci o cenama, generisani iz Excel cenovnika. |
 
-## Ažuriranje cena
+## Uređivanje cena (u aplikaciji)
+
+U tabu **Cenovnik** kliknite **✎ Uredi cene**. Otvara se režim za uređivanje:
+
+- **Izmena cena** — sve ćelije postaju polja za unos; menjate cene direktno.
+  Uređujete cene u trenutno izabranoj valuti (EUR ili RSD) — prebacite valutu
+  gore desno da uredite drugu. Prazna polja (—) možete popuniti da dodate paket.
+- **Preimenovanje** — promenite naziv vozila u polju levo.
+- **＋ Dodaj vozilo** — novo vozilo sa svim tarifama (popunjavate cene).
+- **⎘ Dupliraj** / **✕ Obriši** — po vozilu.
+- **⬇ Izvezi pricing.js** — preuzima ažuriran `pricing.js` koji možete zameniti
+  u projektu (trajno čuvanje / objava na sajtu).
+- **⬇ Izvezi JSON** / **⬆ Uvezi JSON** — prenos cenovnika između uređaja.
+- **↺ Fabričke cene** — vraća originalne cene iz `pricing.js`.
+
+Izmene se automatski čuvaju u pregledaču (localStorage), pa ostaju i posle
+osvežavanja stranice. Da bi izmene bile trajne i vidljive svima, izvezite
+`pricing.js` i zamenite fajl u projektu.
+
+## Struktura podataka
 
 Cene su u `pricing.js` (`window.ECS_PRICING`). Za svako vozilo:
 
-- `hourly[]` — po satu: `{ h, km, eur, rsd, unitEur, unitRsd }`
+- `hourly[]` — po satu: `{ h, km, eur, rsd }`
 - `day[]` — dnevni paketi: `{ km, eur, rsd }`
 - `perKmEur` / `perKmRsd` — cena dodatnog kilometra
 
 Kada dobijete novi Excel cenovnik, dovoljno je regenerisati `pricing.js`
-(vrednosti su preslikane 1:1 iz kolona `2024` sheet-a).
+(vrednosti su preslikane 1:1 iz kolona `2024` sheet-a) ili uneti izmene
+direktno u aplikaciji i izvezti `pricing.js`.
 
 ## Logo
 

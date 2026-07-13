@@ -137,9 +137,30 @@
   table.price td:first-child,table.price th:first-child{text-align:left;position:sticky;left:0;background:var(--bg-2);font-weight:700;color:var(--ink)}
   table.price tbody tr:hover td{background:var(--gold-soft)}
   table.price td.km{color:var(--muted-2);font-size:.72rem}
-  .pt-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .pt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .pt-tabs{display:flex;gap:8px;flex-wrap:wrap}
   .pt-tabs button{border:1px solid var(--line-soft);background:var(--card);color:var(--muted);padding:8px 16px;border-radius:999px;cursor:pointer;font-size:.8rem;font-weight:600}
   .pt-tabs button.active{border-color:var(--gold);background:var(--gold-soft);color:var(--gold-bright)}
+  .pt-toggle{border:1px solid var(--line-soft);background:var(--card);color:var(--muted);padding:8px 16px;border-radius:999px;cursor:pointer;font-size:.8rem;font-weight:700}
+  .pt-toggle.active{border-color:var(--gold);background:var(--gold-soft);color:var(--gold-bright)}
+
+  /* editor */
+  #editToolbar{display:none;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  #editToolbar button{border:1px solid var(--line-soft);background:var(--card-2);color:var(--ink);border-radius:9px;padding:9px 14px;font-size:.8rem;font-weight:600;cursor:pointer}
+  #editToolbar button:hover{border-color:var(--gold)}
+  #editToolbar button.primary{background:var(--gold-soft);border-color:var(--gold);color:var(--gold-bright)}
+  #editToolbar .sep{flex:1 1 12px}
+  #editHint{display:none}
+  table.price input.pcell{width:70px;background:var(--card-2);border:1px solid var(--line-soft);color:var(--ink);border-radius:6px;padding:5px 6px;font-size:.78rem;text-align:right;font-variant-numeric:tabular-nums}
+  table.price input.pcell:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 2px var(--gold-soft)}
+  table.price td.edit{padding:5px 6px}
+  table.price input.pname{width:140px;background:var(--card-2);border:1px solid var(--line-soft);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:.82rem;font-weight:700}
+  table.price input.pname:focus{border-color:var(--gold);outline:none}
+  table.price td.namecell{white-space:nowrap}
+  .rowbtns{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
+  .rowbtns button{border:1px solid var(--line-soft);background:var(--card);color:var(--muted);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:.82rem;line-height:1;padding:0}
+  .rowbtns button:hover{border-color:var(--gold);color:var(--gold)}
+  .rowbtns button.del:hover{border-color:#e0533d;color:#e0533d}
 
   .foot{text-align:center;color:var(--muted-2);font-size:.74rem;margin-top:34px;letter-spacing:.04em}
   .foot a{color:var(--gold);text-decoration:none}
@@ -326,9 +347,26 @@
     <div class="card">
       <div class="card-head"><h2>Cenovnik — satni najam</h2></div>
       <div class="card-body">
-        <div class="pt-tabs">
-          <button id="ptHourly" class="active" onclick="setPT('hourly')">Satni najam (1–12h)</button>
-          <button id="ptDay" onclick="setPT('day')">Dnevni najam (250–700 km)</button>
+        <div class="pt-row">
+          <div class="pt-tabs">
+            <button id="ptHourly" class="active" onclick="setPT('hourly')">Satni najam (1–12h)</button>
+            <button id="ptDay" onclick="setPT('day')">Dnevni najam (250–700 km)</button>
+          </div>
+          <button id="btnEdit" class="pt-toggle" onclick="toggleEdit()">✎ Uredi cene</button>
+        </div>
+        <div id="editToolbar">
+          <button class="primary" onclick="addVehicle()">＋ Dodaj vozilo</button>
+          <button onclick="exportJs()">⬇ Izvezi pricing.js</button>
+          <button onclick="exportJson()">⬇ Izvezi JSON</button>
+          <button onclick="document.getElementById('importFile').click()">⬆ Uvezi JSON</button>
+          <span class="sep"></span>
+          <button onclick="resetData()">↺ Fabričke cene</button>
+          <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importJson(this)">
+        </div>
+        <div id="editHint" class="hint" style="margin-bottom:12px">
+          Uređujete cene u valuti <b id="editCur">EUR</b> — prebacite EUR/RSD gore desno da uredite drugu valutu.
+          Prazna polja (—) možete popuniti da dodate paket. Izmene se automatski čuvaju u pregledaču;
+          koristite <b>Izvezi pricing.js</b> da ih trajno sačuvate u projekat.
         </div>
         <div class="table-scroll"><table class="price" id="priceTable"></table></div>
         <div class="hint" style="margin-top:12px">Prikazane cene su totali po vozilu i paketu. Uključena kilometraža navedena je ispod broja sati. Valuta: <b id="ptCur">EUR</b>.</div>
@@ -342,8 +380,16 @@
 <script src="pricing.js"></script>
 <script>
 /* ============ STATE ============ */
-var DATA = window.ECS_PRICING;
-var state = { vehicle:0, mode:'hourly', currency:'eur', pt:'hourly' };
+var OVKEY='ECS_PRICING_OVERRIDE_v1';
+var KM_ALLOC={1:25,2:50,3:75,4:100,5:125,6:150,7:175,8:200,9:200,10:200,11:200,12:200};
+var KMS_DAY=[250,300,350,400,450,500,550,600,650,700];
+function loadData(){
+  try{ var s=localStorage.getItem(OVKEY); if(s){ var d=JSON.parse(s); if(d&&d.vehicles&&d.vehicles.length) return d; } }catch(e){}
+  return JSON.parse(JSON.stringify(window.ECS_PRICING));
+}
+function saveData(){ try{ localStorage.setItem(OVKEY, JSON.stringify(DATA)); }catch(e){} }
+var DATA = loadData();
+var state = { vehicle:0, mode:'hourly', currency:'eur', pt:'hourly', edit:false };
 
 var fmt = {
   eur: function(n){ return new Intl.NumberFormat('sr-RS',{maximumFractionDigits:0}).format(Math.round(n))+' €'; },
@@ -352,11 +398,16 @@ var fmt = {
 function money(v, cur){ return fmt[cur](v); }
 
 /* ============ INIT ============ */
-function init(){
-  var sel = document.getElementById('vehicle');
+function populateVehicles(){
+  var sel=document.getElementById('vehicle'); sel.innerHTML='';
   DATA.vehicles.forEach(function(v,i){
     var o=document.createElement('option'); o.value=i; o.textContent=v.name; sel.appendChild(o);
   });
+  if(!DATA.vehicles[state.vehicle]) state.vehicle=0;
+  sel.value=String(state.vehicle);
+}
+function init(){
+  populateVehicles();
   // defaults
   var t=new Date();
   document.getElementById('qdate').value = t.toISOString().slice(0,10);
@@ -516,36 +567,125 @@ function setPT(m){ state.pt=m;
   document.getElementById('ptDay').classList.toggle('active', m==='day');
   renderTable();
 }
+function nameCellHtml(vi, v){
+  if(!state.edit) return '<td>'+escapeHtml(v.name)+'</td>';
+  return '<td class="namecell"><input class="pname" data-vi="'+vi+'" value="'+escapeHtml(v.name)+'" oninput="editName(this)">'+
+    '<span class="rowbtns"><button title="Dupliraj vozilo" onclick="dupVehicle('+vi+')">⎘</button>'+
+    '<button class="del" title="Obriši vozilo" onclick="delVehicle('+vi+')">✕</button></span></td>';
+}
+function priceCellHtml(vi, kind, key, val){
+  if(state.edit) return '<td class="edit"><input class="pcell" type="number" min="0" step="1" data-vi="'+vi+'" data-kind="'+kind+'" data-key="'+key+'" value="'+(val==null?'':val)+'" oninput="editCell(this)"></td>';
+  return '<td'+(kind==='perkm'?' class="km"':'')+'>'+(val==null?'—':money(val,state.currency))+'</td>';
+}
 function renderTable(){
-  document.getElementById('ptCur').textContent = state.currency==='eur'?'EUR':'RSD';
-  var cur=state.currency, t=document.getElementById('priceTable'), html='';
+  var cur=state.currency;
+  document.getElementById('ptCur').textContent = cur==='eur'?'EUR':'RSD';
+  var ec=document.getElementById('editCur'); if(ec) ec.textContent = cur==='eur'?'EUR':'RSD';
+  var t=document.getElementById('priceTable'), html='';
   if(state.pt==='hourly'){
-    var maxH=12;
     html+='<thead><tr><th>Vozilo</th>';
-    for(var h=1;h<=maxH;h++){ var km={1:25,2:50,3:75,4:100,5:125,6:150,7:175,8:200,9:200,10:200,11:200,12:200}[h];
-      html+='<th>'+h+'h<br><span style="font-weight:400;color:var(--muted-2)">'+km+' km</span></th>'; }
+    for(var h=1;h<=12;h++){ html+='<th>'+h+'h<br><span style="font-weight:400;color:var(--muted-2)">'+KM_ALLOC[h]+' km</span></th>'; }
     html+='</tr></thead><tbody>';
-    DATA.vehicles.forEach(function(v){
-      html+='<tr><td>'+v.name+'</td>';
-      for(var h=1;h<=maxH;h++){ var tier=v.hourly.find(function(x){return x.h===h;});
-        html+='<td>'+(tier?money(tier[cur],cur):'—')+'</td>'; }
+    DATA.vehicles.forEach(function(v,vi){
+      html+='<tr>'+nameCellHtml(vi,v);
+      for(var h=1;h<=12;h++){ var tier=v.hourly.find(function(x){return x.h===h;});
+        html+=priceCellHtml(vi,'hourly',h, tier?tier[cur]:null); }
       html+='</tr>';
     });
     html+='</tbody>';
   } else {
-    var kms=[250,300,350,400,450,500,550,600,650,700];
-    html+='<thead><tr><th>Vozilo</th><th>€/km</th>';
-    kms.forEach(function(k){ html+='<th>'+k+' km</th>'; });
+    html+='<thead><tr><th>Vozilo</th><th>Cena/km</th>';
+    KMS_DAY.forEach(function(k){ html+='<th>'+k+' km</th>'; });
     html+='</tr></thead><tbody>';
-    DATA.vehicles.forEach(function(v){
-      html+='<tr><td>'+v.name+'</td><td class="km">'+money(v[cur==='eur'?'perKmEur':'perKmRsd'],cur)+'</td>';
-      kms.forEach(function(k){ var d=v.day.find(function(x){return x.km===k;});
-        html+='<td>'+(d?money(d[cur],cur):'—')+'</td>'; });
+    DATA.vehicles.forEach(function(v,vi){
+      html+='<tr>'+nameCellHtml(vi,v)+priceCellHtml(vi,'perkm','perkm', v[cur==='eur'?'perKmEur':'perKmRsd']);
+      KMS_DAY.forEach(function(k){ var d=v.day.find(function(x){return x.km===k;});
+        html+=priceCellHtml(vi,'day',k, d?d[cur]:null); });
       html+='</tr>';
     });
     html+='</tbody>';
   }
   t.innerHTML=html;
+}
+
+/* ============ EDITOR ============ */
+function toggleEdit(){
+  state.edit=!state.edit;
+  document.getElementById('btnEdit').classList.toggle('active', state.edit);
+  document.getElementById('editToolbar').style.display = state.edit?'flex':'none';
+  document.getElementById('editHint').style.display = state.edit?'block':'none';
+  renderTable();
+}
+function editName(el){
+  var vi=+el.dataset.vi; DATA.vehicles[vi].name=el.value; saveData();
+  var o=document.querySelector('#vehicle option[value="'+vi+'"]'); if(o) o.textContent=el.value;
+}
+function editCell(el){
+  var vi=+el.dataset.vi, kind=el.dataset.kind, key=el.dataset.key, cur=state.currency;
+  var v=DATA.vehicles[vi]; var raw=el.value.trim();
+  var val = raw===''?0:parseFloat(raw); if(isNaN(val)||val<0) val=0;
+  if(kind==='hourly'){
+    var h=+key, t=v.hourly.find(function(x){return x.h===h;});
+    if(!t){ t={h:h, km:KM_ALLOC[h]||200, eur:0, rsd:0}; v.hourly.push(t); v.hourly.sort(function(a,b){return a.h-b.h;}); }
+    t[cur]=val;
+  } else if(kind==='day'){
+    var km=+key, d=v.day.find(function(x){return x.km===km;});
+    if(!d){ d={km:km, eur:0, rsd:0}; v.day.push(d); v.day.sort(function(a,b){return a.km-b.km;}); }
+    d[cur]=val;
+  } else if(kind==='perkm'){
+    v[cur==='eur'?'perKmEur':'perKmRsd']=val;
+  }
+  saveData();
+}
+function addVehicle(){
+  var name=prompt('Naziv novog vozila:','Novo vozilo'); if(name===null) return;
+  name=name.trim()||'Novo vozilo';
+  var hourly=[]; for(var h=1;h<=12;h++) hourly.push({h:h, km:KM_ALLOC[h], eur:0, rsd:0});
+  var day=[]; KMS_DAY.forEach(function(k){ day.push({km:k, eur:0, rsd:0}); });
+  DATA.vehicles.push({name:name, perKmEur:0, perKmRsd:0, hourly:hourly, day:day});
+  saveData(); populateVehicles(); onVehicleChange(); renderTable();
+}
+function dupVehicle(i){
+  var c=JSON.parse(JSON.stringify(DATA.vehicles[i])); c.name=c.name+' (kopija)';
+  DATA.vehicles.splice(i+1,0,c);
+  saveData(); populateVehicles(); onVehicleChange(); renderTable();
+}
+function delVehicle(i){
+  if(DATA.vehicles.length<=1){ alert('Mora postojati bar jedno vozilo.'); return; }
+  if(!confirm('Obrisati vozilo „'+DATA.vehicles[i].name+'"?')) return;
+  DATA.vehicles.splice(i,1);
+  if(state.vehicle>=DATA.vehicles.length) state.vehicle=DATA.vehicles.length-1;
+  saveData(); populateVehicles(); onVehicleChange(); renderTable();
+}
+function downloadFile(name, content, type){
+  var blob=new Blob([content],{type:type||'text/plain;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); },1500);
+}
+function exportJs(){
+  var body='// ECS cenovnik – izmenjeno u kalkulatoru\nwindow.ECS_PRICING = '+JSON.stringify({vehicles:DATA.vehicles})+';\n';
+  downloadFile('pricing.js', body, 'text/javascript;charset=utf-8');
+}
+function exportJson(){ downloadFile('ecs-cenovnik.json', JSON.stringify(DATA,null,1), 'application/json;charset=utf-8'); }
+function importJson(input){
+  var f=input.files&&input.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{ var d=JSON.parse(r.result); if(!d||!d.vehicles||!d.vehicles.length) throw 0;
+      DATA=d; saveData(); populateVehicles(); onVehicleChange(); renderTable();
+      alert('Cenovnik je uvezen ('+d.vehicles.length+' vozila).');
+    }catch(e){ alert('Neispravan JSON fajl.'); }
+  };
+  r.readAsText(f); input.value='';
+}
+function resetData(){
+  if(!confirm('Vratiti originalne cene iz cenovnika? Sve vaše izmene biće obrisane.')) return;
+  try{ localStorage.removeItem(OVKEY); }catch(e){}
+  DATA=JSON.parse(JSON.stringify(window.ECS_PRICING));
+  state.vehicle=0;
+  populateVehicles(); onVehicleChange(); renderTable();
 }
 
 init();
