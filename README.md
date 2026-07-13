@@ -39,6 +39,14 @@ Cene su u `pricing.js` (`window.ECS_PRICING`). Za svako vozilo:
 Kada dobijete novi Excel cenovnik, dovoljno je regenerisati `pricing.js`
 (vrednosti su preslikane 1:1 iz kolona `2024` sheet-a).
 
+## Logo
+
+Trenutni logo je **verna vektorska rekonstrukcija** ECS znaka (šofer, četiri zlatne
+zvezdice, „ECS" natpis) — originalni fajl nije bio dostupan u okruženju. Za tačan
+originalni logo, pošaljite fajl (PNG/SVG) i biće ugrađen 1:1 (kao `data:` URI,
+bez spoljnih zavisnosti). Logo se pojavljuje na dva mesta u `index.html`
+(zaglavlje aplikacije i zaglavlje ponude).
+
 ## Napomena o godini
 
 Fajl je nazvan `cenovnik_2025.xlsx`, ali aktivni radni list u Excel-u nosi naslov
