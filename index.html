@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECS · Kalkulator ponuda</title>
+<style>
+  :root{
+    --gold:#D4AF37;
+    --gold-bright:#F0C24B;
+    --gold-soft:rgba(212,175,55,.14);
+    --bg:#0b0b0d;
+    --bg-2:#101114;
+    --card:#141519;
+    --card-2:#191b20;
+    --line:rgba(212,175,55,.20);
+    --line-soft:rgba(255,255,255,.08);
+    --ink:#f5f5f4;
+    --muted:#a1a1aa;
+    --muted-2:#71717a;
+    --ok:#4ade80;
+    --radius:16px;
+    --shadow:0 20px 60px rgba(0,0,0,.45);
+    --font:"Segoe UI",Roboto,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--font);
+    background:radial-gradient(1200px 600px at 80% -10%,rgba(212,175,55,.08),transparent 60%),var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    line-height:1.45;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+
+  /* ---------- Top bar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:26px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{width:66px;height:66px;flex:none}
+  .brand h1{font-size:1.08rem;letter-spacing:.14em;margin:0;font-weight:700}
+  .brand small{display:block;color:var(--gold);font-size:.62rem;letter-spacing:.34em;margin-top:3px;font-weight:600}
+  .topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+  .tabs{display:inline-flex;background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:4px}
+  .tabs button{border:0;background:transparent;color:var(--muted);padding:8px 18px;border-radius:999px;cursor:pointer;font-size:.82rem;font-weight:600;letter-spacing:.02em;transition:.18s}
+  .tabs button.active{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a1408;box-shadow:0 4px 14px rgba(212,175,55,.3)}
+
+  .cur{display:inline-flex;background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:4px}
+  .cur button{border:0;background:transparent;color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:.8rem;font-weight:700;transition:.18s}
+  .cur button.active{background:var(--gold-soft);color:var(--gold-bright)}
+
+  /* ---------- Layout ---------- */
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:22px;align-items:start}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+  .card{background:linear-gradient(180deg,var(--card),var(--bg-2));border:1px solid var(--line-soft);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card-head{padding:18px 22px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:10px}
+  .card-head h2{margin:0;font-size:.82rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .card-body{padding:20px 22px}
+
+  .field{margin-bottom:18px}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:600}
+  select,input[type=number],input[type=text],input[type=date],textarea{
+    width:100%;background:var(--card-2);border:1px solid var(--line-soft);color:var(--ink);
+    border-radius:10px;padding:12px 13px;font-size:.95rem;font-family:inherit;outline:none;transition:.15s
+  }
+  select:focus,input:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+  select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 13px center;padding-right:38px}
+  textarea{resize:vertical;min-height:60px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .hint{font-size:.72rem;color:var(--muted-2);margin-top:7px}
+  .hint b{color:var(--gold-bright)}
+
+  /* Segmented service type */
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .seg button{border:1px solid var(--line-soft);background:var(--card-2);color:var(--muted);padding:13px 10px;border-radius:11px;cursor:pointer;font-size:.86rem;font-weight:600;transition:.16s;text-align:center}
+  .seg button .s{display:block;font-size:.68rem;color:var(--muted-2);font-weight:500;margin-top:3px}
+  .seg button.active{border-color:var(--gold);background:var(--gold-soft);color:var(--gold-bright)}
+  .seg button.active .s{color:var(--gold)}
+  .seg button:disabled{opacity:.35;cursor:not-allowed}
+
+  .divider{height:1px;background:var(--line-soft);margin:20px 0}
+  .section-label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:0 0 14px;font-weight:700}
+
+  /* ---------- Offer (paper) ---------- */
+  .offer{background:#ffffff;color:#1c1c1c;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06)}
+  .offer-head{background:linear-gradient(120deg,#111013,#1c1a16);color:#fff;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:3px solid var(--gold)}
+  .offer-head .lb{display:flex;align-items:center;gap:13px}
+  .offer-head h3{margin:0;font-size:1rem;letter-spacing:.16em;font-weight:700}
+  .offer-head small{color:var(--gold);letter-spacing:.3em;font-size:.56rem;font-weight:600;display:block;margin-top:3px}
+  .offer-head .no{text-align:right;font-size:.72rem;color:#cfcfcf;line-height:1.6}
+  .offer-head .no b{color:#fff;font-size:.86rem}
+
+  .offer-body{padding:22px 24px}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-bottom:18px}
+  .meta .m{font-size:.9rem}
+  .meta .k{font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:#8a8a8a;font-weight:700;margin-bottom:2px}
+  .meta .v{color:#1c1c1c;font-weight:600;word-break:break-word}
+  .meta .v.empty{color:#bcbcbc;font-weight:400;font-style:italic}
+
+  .veh-band{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#faf6ea;border:1px solid #eadcae;border-radius:12px;padding:14px 16px;margin-bottom:16px}
+  .veh-band .vn{font-size:1.12rem;font-weight:800;color:#111}
+  .veh-band .vs{font-size:.8rem;color:#7a6a2f;font-weight:600;text-align:right}
+
+  table.items{width:100%;border-collapse:collapse;font-size:.9rem}
+  table.items td{padding:11px 4px;border-bottom:1px solid #eee}
+  table.items td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.items .desc small{display:block;color:#999;font-size:.74rem;font-weight:400}
+  table.items tr.disc td{color:#c0392b}
+  .total-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:18px;padding-top:16px;border-top:2px solid #1c1c1c}
+  .total-row .tl{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a;font-weight:700}
+  .total-row .tv{font-size:1.9rem;font-weight:800;color:#111;line-height:1;font-variant-numeric:tabular-nums}
+  .total-row .alt{font-size:.86rem;color:#8a8a8a;font-weight:600;margin-top:4px}
+
+  .note{margin-top:18px;padding:13px 15px;background:#f7f7f7;border-radius:10px;font-size:.74rem;color:#777;line-height:1.55}
+  .note b{color:#555}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;padding:0 24px 22px}
+  .btn{flex:1;min-width:130px;border:0;border-radius:11px;padding:13px;font-size:.88rem;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:.16s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+  .btn-gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a1408}
+  .btn-gold:hover{filter:brightness(1.06)}
+  .btn-ghost{background:#f0f0f0;color:#333}
+  .btn-ghost:hover{background:#e6e6e6}
+  .btn svg{width:16px;height:16px}
+
+  /* ---------- Price table ---------- */
+  #tablePane{display:none}
+  .table-scroll{overflow-x:auto;border-radius:12px;border:1px solid var(--line-soft)}
+  table.price{width:100%;border-collapse:collapse;font-size:.8rem;min-width:900px}
+  table.price th,table.price td{padding:9px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line-soft)}
+  table.price th{position:sticky;top:0;background:var(--card-2);color:var(--gold);font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;z-index:1}
+  table.price td:first-child,table.price th:first-child{text-align:left;position:sticky;left:0;background:var(--bg-2);font-weight:700;color:var(--ink)}
+  table.price tbody tr:hover td{background:var(--gold-soft)}
+  table.price td.km{color:var(--muted-2);font-size:.72rem}
+  .pt-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .pt-tabs button{border:1px solid var(--line-soft);background:var(--card);color:var(--muted);padding:8px 16px;border-radius:999px;cursor:pointer;font-size:.8rem;font-weight:600}
+  .pt-tabs button.active{border-color:var(--gold);background:var(--gold-soft);color:var(--gold-bright)}
+
+  .foot{text-align:center;color:var(--muted-2);font-size:.74rem;margin-top:34px;letter-spacing:.04em}
+  .foot a{color:var(--gold);text-decoration:none}
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{background:#fff}
+    .wrap{max-width:none;padding:0}
+    .topbar,.card:not(.offer-card),#inputCard,.actions,.foot,.tabs,.cur{display:none!important}
+    .grid{display:block}
+    .offer{box-shadow:none;border:none;border-radius:0}
+    .offer-head{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .veh-band{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= TOP BAR ================= -->
+  <div class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ECS logo">
+        <rect width="120" height="120" rx="16" fill="#0f0f10"/>
+        <g transform="translate(0,-2)">
+          <circle cx="60" cy="34" r="11" fill="#e9e9e9"/>
+          <path d="M38 74c0-14 10-24 22-24s22 10 22 24v4H38z" fill="#e9e9e9"/>
+          <path d="M60 50c-6 0-11 2-15 6l15 10 15-10c-4-4-9-6-15-6z" fill="#111"/>
+        </g>
+        <g fill="#F0C24B">
+          <path d="M42 88l1.3 3.4 3.7.2-2.9 2.3 1 3.6-3.1-2-3.1 2 1-3.6-2.9-2.3 3.7-.2z"/>
+          <path d="M54 88l1.3 3.4 3.7.2-2.9 2.3 1 3.6-3.1-2-3.1 2 1-3.6-2.9-2.3 3.7-.2z"/>
+          <path d="M66 88l1.3 3.4 3.7.2-2.9 2.3 1 3.6-3.1-2-3.1 2 1-3.6-2.9-2.3 3.7-.2z"/>
+          <path d="M78 88l1.3 3.4 3.7.2-2.9 2.3 1 3.6-3.1-2-3.1 2 1-3.6-2.9-2.3 3.7-.2z"/>
+        </g>
+        <text x="60" y="112" text-anchor="middle" font-family="Arial" font-weight="800" font-size="9" letter-spacing="2" fill="#F0C24B">ECS</text>
+      </svg>
+      <div>
+        <h1>EXECUTIVE CAR SERVICE</h1>
+        <small>KALKULATOR PONUDA</small>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="tabs">
+        <button id="tabCalc" class="active" onclick="showPane('calc')">Kalkulator</button>
+        <button id="tabTable" onclick="showPane('table')">Cenovnik</button>
+      </div>
+      <div class="cur">
+        <button id="curEUR" class="active" onclick="setCurrency('eur')">EUR €</button>
+        <button id="curRSD" onclick="setCurrency('rsd')">RSD</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CALCULATOR PANE ================= -->
+  <div id="calcPane">
+    <div class="grid">
+
+      <!-- INPUTS -->
+      <div class="card" id="inputCard">
+        <div class="card-head"><h2>Parametri ponude</h2></div>
+        <div class="card-body">
+
+          <div class="field">
+            <label for="vehicle">Vozilo</label>
+            <select id="vehicle" onchange="onVehicleChange()"></select>
+          </div>
+
+          <div class="field">
+            <label>Tip usluge</label>
+            <div class="seg">
+              <button id="modeHourly" class="active" onclick="setMode('hourly')">Satni najam<span class="s">1–12 h, uključeni km</span></button>
+              <button id="modeDay" onclick="setMode('day')">Dnevni najam<span class="s">do 10h, veća kilometraža</span></button>
+            </div>
+          </div>
+
+          <div class="field" id="hoursField">
+            <label for="hours">Broj angažovanih sati</label>
+            <select id="hours" onchange="render()"></select>
+            <div class="hint" id="hoursHint"></div>
+          </div>
+
+          <div class="field" id="dayField" style="display:none">
+            <label for="dayKm">Paket kilometraže (dnevni najam)</label>
+            <select id="dayKm" onchange="render()"></select>
+            <div class="hint">Puni dan (do 10h) sa uključenom kilometražom iz paketa.</div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label for="extraKm">Dodatni km (van paketa)</label>
+              <input type="number" id="extraKm" min="0" step="1" value="0" oninput="render()">
+              <div class="hint" id="extraKmHint"></div>
+            </div>
+            <div class="field">
+              <label for="discount">Popust (%)</label>
+              <input type="number" id="discount" min="0" max="100" step="1" value="0" oninput="render()">
+              <div class="hint">Opciono – umanjuje ukupan iznos.</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <p class="section-label">Podaci o klijentu (za ponudu)</p>
+
+          <div class="field">
+            <label for="client">Klijent / kompanija</label>
+            <input type="text" id="client" placeholder="npr. Marko Marković" oninput="render()">
+          </div>
+          <div class="field">
+            <label for="route">Relacija / opis</label>
+            <input type="text" id="route" placeholder="npr. Aerodrom Beograd → Hotel Hyatt" oninput="render()">
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="qdate">Datum</label>
+              <input type="date" id="qdate" onchange="render()">
+            </div>
+            <div class="field">
+              <label for="qnum">Ponuda br.</label>
+              <input type="text" id="qnum" oninput="render()">
+            </div>
+          </div>
+          <div class="field">
+            <label for="qnote">Napomena</label>
+            <textarea id="qnote" placeholder="npr. Doček sa tablom, voda u vozilu…" oninput="render()"></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- OFFER -->
+      <div class="card offer-card" style="background:transparent;border:0;box-shadow:none">
+        <div class="offer" id="offer">
+          <div class="offer-head">
+            <div class="lb">
+              <svg width="46" height="46" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0,-2)"><circle cx="60" cy="34" r="11" fill="#e9e9e9"/><path d="M38 74c0-14 10-24 22-24s22 10 22 24v4H38z" fill="#e9e9e9"/><path d="M60 50c-6 0-11 2-15 6l15 10 15-10c-4-4-9-6-15-6z" fill="#111"/></g>
+                <g fill="#F0C24B"><path d="M42 88l1.3 3.4 3.7.2-2.9 2.3 1 3.6-3.1-2-3.1 2 1-3.6-2.9-2.3 3.7-.2z"/><path d="M54 88l1.3 3.4 3.7.2-2.9 2.3 1 3.6-3.1-2-3.1 2 1-3.6-2.9-2.3 3.7-.2z"/><path d="M66 88l1.3 3.4 3.7.2-2.9 2.3 1 3.6-3.1-2-3.1 2 1-3.6-2.9-2.3 3.7-.2z"/><path d="M78 88l1.3 3.4 3.7.2-2.9 2.3 1 3.6-3.1-2-3.1 2 1-3.6-2.9-2.3 3.7-.2z"/></g>
+              </svg>
+              <div><h3>EXECUTIVE CAR SERVICE</h3><small>PONUDA ZA PREVOZ</small></div>
+            </div>
+            <div class="no">Ponuda br.<br><b id="oNum">—</b><br><span id="oDate">—</span></div>
+          </div>
+          <div class="offer-body">
+            <div class="meta">
+              <div class="m"><div class="k">Klijent</div><div class="v" id="oClient">—</div></div>
+              <div class="m"><div class="k">Relacija</div><div class="v" id="oRoute">—</div></div>
+            </div>
+
+            <div class="veh-band">
+              <div class="vn" id="oVehicle">—</div>
+              <div class="vs" id="oService">—</div>
+            </div>
+
+            <table class="items" id="oItems"></table>
+
+            <div class="total-row">
+              <div><div class="tl">Ukupno za naplatu</div><div class="alt" id="oAlt">—</div></div>
+              <div class="tv" id="oTotal">—</div>
+            </div>
+
+            <div class="note" id="oNote">
+              <b>Napomena:</b> Ponuda je informativnog karaktera. Cene su iskazane u <span id="oCurName">EUR</span>. Uključena kilometraža odnosi se na navedeni paket; svaki dodatni kilometar naplaćuje se prema važećem cenovniku. Ponuda važi 7 dana od datuma izdavanja.
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-gold" onclick="window.print()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+              Štampaj / PDF
+            </button>
+            <button class="btn btn-ghost" onclick="copyOffer(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Kopiraj tekst
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= PRICE TABLE PANE ================= -->
+  <div id="tablePane">
+    <div class="card">
+      <div class="card-head"><h2>Cenovnik — satni najam</h2></div>
+      <div class="card-body">
+        <div class="pt-tabs">
+          <button id="ptHourly" class="active" onclick="setPT('hourly')">Satni najam (1–12h)</button>
+          <button id="ptDay" onclick="setPT('day')">Dnevni najam (250–700 km)</button>
+        </div>
+        <div class="table-scroll"><table class="price" id="priceTable"></table></div>
+        <div class="hint" style="margin-top:12px">Prikazane cene su totali po vozilu i paketu. Uključena kilometraža navedena je ispod broja sati. Valuta: <b id="ptCur">EUR</b>.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">EXECUTIVE CAR SERVICE · Beograd · <a href="https://ecs-serbia.com" target="_blank" rel="noopener">ecs-serbia.com</a></div>
+</div>
+
+<script src="pricing.js"></script>
+<script>
+/* ============ STATE ============ */
+var DATA = window.ECS_PRICING;
+var state = { vehicle:0, mode:'hourly', currency:'eur', pt:'hourly' };
+
+var fmt = {
+  eur: function(n){ return new Intl.NumberFormat('sr-RS',{maximumFractionDigits:0}).format(Math.round(n))+' €'; },
+  rsd: function(n){ return new Intl.NumberFormat('sr-RS',{maximumFractionDigits:0}).format(Math.round(n))+' RSD'; }
+};
+function money(v, cur){ return fmt[cur](v); }
+
+/* ============ INIT ============ */
+function init(){
+  var sel = document.getElementById('vehicle');
+  DATA.vehicles.forEach(function(v,i){
+    var o=document.createElement('option'); o.value=i; o.textContent=v.name; sel.appendChild(o);
+  });
+  // defaults
+  var t=new Date();
+  document.getElementById('qdate').value = t.toISOString().slice(0,10);
+  document.getElementById('qnum').value = 'ECS-'+t.getFullYear()+'-'+String(Math.floor(t.getTime()/1000)%10000).padStart(4,'0');
+  onVehicleChange();
+}
+
+function currentVehicle(){ return DATA.vehicles[state.vehicle]; }
+
+function onVehicleChange(){
+  state.vehicle = parseInt(document.getElementById('vehicle').value,10);
+  var v = currentVehicle();
+  // hours options (preserve current selection if still available)
+  var hs = document.getElementById('hours'); var prevH = hs.value; hs.innerHTML='';
+  v.hourly.forEach(function(h){
+    var o=document.createElement('option'); o.value=h.h;
+    o.textContent = h.h+' h  ·  uključeno '+h.km+' km';
+    hs.appendChild(o);
+  });
+  if(prevH && v.hourly.some(function(x){return String(x.h)===prevH;})) hs.value=prevH;
+  // day options (preserve current selection if still available)
+  var ds = document.getElementById('dayKm'); var prevD = ds.value; ds.innerHTML='';
+  v.day.forEach(function(d){
+    var o=document.createElement('option'); o.value=d.km;
+    o.textContent = d.km+' km  ·  '+money(d[state.currency], state.currency);
+    ds.appendChild(o);
+  });
+  if(prevD && v.day.some(function(x){return String(x.km)===prevD;})) ds.value=prevD;
+  // disable day mode if no packages (Limo, Hymmer)
+  var noDay = v.day.length===0;
+  document.getElementById('modeDay').disabled = noDay;
+  if(noDay && state.mode==='day'){ setMode('hourly'); return; }
+  render();
+}
+
+function setMode(m){
+  state.mode=m;
+  document.getElementById('modeHourly').classList.toggle('active', m==='hourly');
+  document.getElementById('modeDay').classList.toggle('active', m==='day');
+  document.getElementById('hoursField').style.display = m==='hourly' ? '' : 'none';
+  document.getElementById('dayField').style.display = m==='day' ? '' : 'none';
+  render();
+}
+
+function setCurrency(c){
+  state.currency=c;
+  document.getElementById('curEUR').classList.toggle('active', c==='eur');
+  document.getElementById('curRSD').classList.toggle('active', c==='rsd');
+  onVehicleChange(); // rebuild option labels with new currency
+  renderTable();
+}
+
+/* ============ QUOTE ============ */
+function computeQuote(){
+  var v = currentVehicle();
+  var base={eur:0,rsd:0}, includedKm=0, service='';
+  if(state.mode==='hourly'){
+    var h = parseInt(document.getElementById('hours').value,10);
+    var tier = v.hourly.find(function(x){return x.h===h;}) || v.hourly[0];
+    base={eur:tier.eur, rsd:tier.rsd}; includedKm=tier.km;
+    service='Satni najam · '+tier.h+' h (uključeno '+tier.km+' km)';
+  } else {
+    var km = parseInt(document.getElementById('dayKm').value,10);
+    var pack = v.day.find(function(x){return x.km===km;}) || v.day[0];
+    base={eur:pack.eur, rsd:pack.rsd}; includedKm=pack.km;
+    service='Dnevni najam · do 10h (uključeno '+pack.km+' km)';
+  }
+  var extraKm = Math.max(0, parseFloat(document.getElementById('extraKm').value)||0);
+  var extra = { eur: extraKm*v.perKmEur, rsd: extraKm*v.perKmRsd };
+  var sub = { eur: base.eur+extra.eur, rsd: base.rsd+extra.rsd };
+  var discPct = Math.min(100, Math.max(0, parseFloat(document.getElementById('discount').value)||0));
+  var disc = { eur: sub.eur*discPct/100, rsd: sub.rsd*discPct/100 };
+  var total = { eur: sub.eur-disc.eur, rsd: sub.rsd-disc.rsd };
+  return {v:v, base:base, includedKm:includedKm, service:service, extraKm:extraKm, extra:extra, sub:sub, discPct:discPct, disc:disc, total:total};
+}
+
+function render(){
+  document.getElementById('hoursHint').innerHTML = state.mode==='hourly'
+    ? 'Uključena kilometraža: <b>'+ (currentVehicle().hourly.find(function(x){return x.h===parseInt(document.getElementById('hours').value,10);})||{km:'—'}).km +' km</b>' : '';
+  var v=currentVehicle();
+  document.getElementById('extraKmHint').innerHTML = 'Cena po km: <b>'+money(v[state.currency==='eur'?'perKmEur':'perKmRsd'], state.currency)+'</b>';
+
+  var q = computeQuote();
+  var cur = state.currency, other = cur==='eur'?'rsd':'eur';
+
+  // header meta
+  document.getElementById('oNum').textContent = document.getElementById('qnum').value || '—';
+  var dv = document.getElementById('qdate').value;
+  document.getElementById('oDate').textContent = dv ? dv.split('-').reverse().join('.')+'.' : '—';
+  setV('oClient', document.getElementById('client').value);
+  setV('oRoute', document.getElementById('route').value);
+  document.getElementById('oVehicle').textContent = v.name;
+  document.getElementById('oService').textContent = q.service;
+
+  // items
+  var rows='';
+  rows += itemRow('Osnovna usluga', q.service, money(q.base[cur],cur));
+  if(q.extraKm>0)
+    rows += itemRow('Dodatni kilometri', q.extraKm+' km × '+money(v[cur==='eur'?'perKmEur':'perKmRsd'],cur), money(q.extra[cur],cur));
+  if(q.discPct>0){
+    rows += itemRow('Međuzbir','', money(q.sub[cur],cur));
+    rows += '<tr class="disc"><td class="desc">Popust '+q.discPct+'%</td><td class="r">− '+money(q.disc[cur],cur)+'</td></tr>';
+  }
+  document.getElementById('oItems').innerHTML = rows;
+
+  document.getElementById('oTotal').textContent = money(q.total[cur],cur);
+  document.getElementById('oAlt').textContent = '≈ '+money(q.total[other],other);
+
+  // note
+  var base = 'Ponuda je informativnog karaktera. Cene su iskazane u '+(cur==='eur'?'EUR':'RSD')+'. Svaki dodatni kilometar van paketa naplaćuje se '+money(v[cur==='eur'?'perKmEur':'perKmRsd'],cur)+'/km. Ponuda važi 7 dana od datuma izdavanja.';
+  var extra = document.getElementById('qnote').value.trim();
+  document.getElementById('oNote').innerHTML = (extra?'<b>Napomena:</b> '+escapeHtml(extra)+'<br><br>':'')+'<b>Uslovi:</b> '+base;
+}
+function itemRow(title, sub, val){
+  return '<tr><td class="desc">'+escapeHtml(title)+(sub?'<small>'+escapeHtml(sub)+'</small>':'')+'</td><td class="r">'+val+'</td></tr>';
+}
+function setV(id, val){
+  var el=document.getElementById(id);
+  if(val && val.trim()){ el.textContent=val; el.classList.remove('empty'); }
+  else { el.textContent='—'; el.classList.add('empty'); }
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+/* ============ COPY ============ */
+function copyOffer(btn){
+  var q=computeQuote(), cur=state.currency, v=currentVehicle();
+  var L=[];
+  L.push('EXECUTIVE CAR SERVICE — Ponuda za prevoz');
+  L.push('Ponuda br.: '+(document.getElementById('qnum').value||'—')+'   Datum: '+document.getElementById('oDate').textContent);
+  var cl=document.getElementById('client').value, rt=document.getElementById('route').value;
+  if(cl) L.push('Klijent: '+cl);
+  if(rt) L.push('Relacija: '+rt);
+  L.push('Vozilo: '+v.name);
+  L.push('Usluga: '+q.service);
+  L.push('Osnovna usluga: '+money(q.base[cur],cur));
+  if(q.extraKm>0) L.push('Dodatni km ('+q.extraKm+'): '+money(q.extra[cur],cur));
+  if(q.discPct>0) L.push('Popust '+q.discPct+'%: -'+money(q.disc[cur],cur));
+  L.push('UKUPNO: '+money(q.total[cur],cur)+'  (≈ '+money(q.total[cur==='eur'?'rsd':'eur'],cur==='eur'?'rsd':'eur')+')');
+  var nt=document.getElementById('qnote').value.trim(); if(nt) L.push('Napomena: '+nt);
+  L.push('ecs-serbia.com');
+  var text=L.join('\n');
+  navigator.clipboard.writeText(text).then(function(){
+    var old=btn.innerHTML; btn.innerHTML='✓ Kopirano'; setTimeout(function(){btn.innerHTML=old;},1600);
+  }).catch(function(){ alert(text); });
+}
+
+/* ============ PANES ============ */
+function showPane(p){
+  document.getElementById('calcPane').style.display = p==='calc'?'block':'none';
+  document.getElementById('tablePane').style.display = p==='table'?'block':'none';
+  document.getElementById('tabCalc').classList.toggle('active', p==='calc');
+  document.getElementById('tabTable').classList.toggle('active', p==='table');
+  if(p==='table') renderTable();
+}
+function setPT(m){ state.pt=m;
+  document.getElementById('ptHourly').classList.toggle('active', m==='hourly');
+  document.getElementById('ptDay').classList.toggle('active', m==='day');
+  renderTable();
+}
+function renderTable(){
+  document.getElementById('ptCur').textContent = state.currency==='eur'?'EUR':'RSD';
+  var cur=state.currency, t=document.getElementById('priceTable'), html='';
+  if(state.pt==='hourly'){
+    var maxH=12;
+    html+='<thead><tr><th>Vozilo</th>';
+    for(var h=1;h<=maxH;h++){ var km={1:25,2:50,3:75,4:100,5:125,6:150,7:175,8:200,9:200,10:200,11:200,12:200}[h];
+      html+='<th>'+h+'h<br><span style="font-weight:400;color:var(--muted-2)">'+km+' km</span></th>'; }
+    html+='</tr></thead><tbody>';
+    DATA.vehicles.forEach(function(v){
+      html+='<tr><td>'+v.name+'</td>';
+      for(var h=1;h<=maxH;h++){ var tier=v.hourly.find(function(x){return x.h===h;});
+        html+='<td>'+(tier?money(tier[cur],cur):'—')+'</td>'; }
+      html+='</tr>';
+    });
+    html+='</tbody>';
+  } else {
+    var kms=[250,300,350,400,450,500,550,600,650,700];
+    html+='<thead><tr><th>Vozilo</th><th>€/km</th>';
+    kms.forEach(function(k){ html+='<th>'+k+' km</th>'; });
+    html+='</tr></thead><tbody>';
+    DATA.vehicles.forEach(function(v){
+      html+='<tr><td>'+v.name+'</td><td class="km">'+money(v[cur==='eur'?'perKmEur':'perKmRsd'],cur)+'</td>';
+      kms.forEach(function(k){ var d=v.day.find(function(x){return x.km===k;});
+        html+='<td>'+(d?money(d[cur],cur):'—')+'</td>'; });
+      html+='</tr>';
+    });
+    html+='</tbody>';
+  }
+  t.innerHTML=html;
+}
+
+init();
+</script>
+</body>
+</html>
