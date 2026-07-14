@@ -5,14 +5,18 @@ napravljen na osnovu zvaničnog cenovnika (`cenovnik_2025.xlsx`).
 
 ## Šta radi
 
-- **Kalkulator** — izbor vozila, tipa usluge, sati/kilometraže i automatski obračun cene.
+- **Kalkulator (više stavki u jednoj ponudi)** — svaka stavka je jedno vozilo
+  sa svojim tipom usluge i trajanjem; klikom na **＋ Dodaj u ponudu** dodaje se
+  u listu. Jedna ponuda može imati proizvoljno mnogo vozila i različitih trajanja.
   - **Satni najam** (1–12 h) sa uključenom kilometražom po paketu.
   - **Dnevni najam** (do 10 h) sa proširenom kilometražom (250–700 km).
   - **Dodatni kilometri** van paketa — obračun po ceni/km za dato vozilo.
-  - **Popust (%)** — opciono umanjenje ukupnog iznosa.
+  - **Broj vozila** — količina istih vozila u istom terminu (množi stavku).
   - **Valuta** — prikaz u **EUR** ili **RSD** (obe cene iz cenovnika).
-- **Ponuda** — pregled u formi dokumenta sa ECS brendingom, podacima o klijentu,
-  relaciji i napomeni. Dugmad **Štampaj / PDF** (štampa samo ponudu) i **Kopiraj tekst**.
+- **Ponuda** — dokument sa ECS brendingom: lista svih stavki (svaka se može
+  ukloniti dugmetom ✕), **međuzbir**, opcioni **popust (%)** na ukupno, i
+  **ukupan iznos** u obe valute. Podaci o klijentu, relaciji i napomeni.
+  Dugmad **Štampaj / PDF** (štampa samo ponudu) i **Kopiraj tekst**.
 - **Cenovnik** — kompletna tabela svih vozila (satni i dnevni najam), u izabranoj valuti.
 
 ## Pokretanje

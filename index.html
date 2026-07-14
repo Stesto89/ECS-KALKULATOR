@@ -85,6 +85,8 @@
 
   .divider{height:1px;background:var(--line-soft);margin:20px 0}
   .section-label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:0 0 14px;font-weight:700}
+  .btn-add{width:100%;border:1px solid var(--gold);background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a1408;border-radius:11px;padding:13px;font-size:.9rem;font-weight:800;cursor:pointer;letter-spacing:.01em;transition:.16s}
+  .btn-add:hover{filter:brightness(1.06)}
 
   /* ---------- Offer (paper) ---------- */
   .offer{background:#ffffff;color:#1c1c1c;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06)}
@@ -103,16 +105,21 @@
   .meta .v{color:#1c1c1c;font-weight:600;word-break:break-word}
   .meta .v.empty{color:#bcbcbc;font-weight:400;font-style:italic}
 
-  .veh-band{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#faf6ea;border:1px solid #eadcae;border-radius:12px;padding:14px 16px;margin-bottom:16px}
-  .veh-band .vn{font-size:1.12rem;font-weight:800;color:#111}
-  .veh-band .vs{font-size:.8rem;color:#7a6a2f;font-weight:600;text-align:right}
+  .stavke-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#8a8a8a;font-weight:700;border-bottom:2px solid #1c1c1c;padding-bottom:6px;margin-bottom:2px}
+  .stavke-empty{padding:20px 4px;color:#b0b0b0;font-size:.86rem;font-style:italic;text-align:center;border-bottom:1px solid #eee}
 
   table.items{width:100%;border-collapse:collapse;font-size:.9rem}
-  table.items td{padding:11px 4px;border-bottom:1px solid #eee}
+  table.items td{padding:11px 4px;border-bottom:1px solid #eee;vertical-align:top}
   table.items td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  table.items .desc small{display:block;color:#999;font-size:.74rem;font-weight:400}
-  table.items tr.disc td{color:#c0392b}
-  .total-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:18px;padding-top:16px;border-top:2px solid #1c1c1c}
+  table.items .desc b{font-size:.94rem;color:#111}
+  table.items .desc small{display:block;color:#999;font-size:.74rem;font-weight:400;margin-top:2px}
+  table.items td.rm{width:30px;text-align:center;padding-right:0}
+  table.items button.rmbtn{border:1px solid #e0d0d0;background:#fff;color:#c0392b;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:.8rem;line-height:1;padding:0}
+  table.items button.rmbtn:hover{background:#c0392b;color:#fff;border-color:#c0392b}
+  .sumrows{margin-top:12px}
+  .sumrows .sr{display:flex;justify-content:space-between;font-size:.88rem;color:#444;padding:4px 4px}
+  .sumrows .sr.disc{color:#c0392b}
+  .total-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:12px;padding-top:16px;border-top:2px solid #1c1c1c}
   .total-row .tl{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a;font-weight:700}
   .total-row .tv{font-size:1.9rem;font-weight:800;color:#111;line-height:1;font-variant-numeric:tabular-nums}
   .total-row .alt{font-size:.86rem;color:#8a8a8a;font-weight:600;margin-top:4px}
@@ -175,7 +182,8 @@
     .grid{display:block}
     .offer{box-shadow:none;border:none;border-radius:0}
     .offer-head{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .veh-band{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table.items td.rm,.rmbtn{display:none!important}
+    table.items td.desc{padding-left:0}
   }
 </style>
 </head>
@@ -243,36 +251,43 @@
               <div class="hint" id="extraKmHint"></div>
             </div>
             <div class="field">
-              <label for="discount">Popust (%)</label>
-              <input type="number" id="discount" min="0" max="100" step="1" value="0" oninput="render()">
-              <div class="hint">Opciono – umanjuje ukupan iznos.</div>
+              <label for="qty">Broj vozila</label>
+              <input type="number" id="qty" min="1" step="1" value="1" oninput="render()">
+              <div class="hint">Ista vozila u istom terminu.</div>
             </div>
           </div>
+
+          <button class="btn-add" id="btnAdd" onclick="addItem()">＋ Dodaj stavku u ponudu</button>
 
           <div class="divider"></div>
           <p class="section-label">Podaci o klijentu (za ponudu)</p>
 
           <div class="field">
             <label for="client">Klijent / kompanija</label>
-            <input type="text" id="client" placeholder="npr. Marko Marković" oninput="render()">
+            <input type="text" id="client" placeholder="npr. Marko Marković" oninput="renderOffer()">
           </div>
           <div class="field">
             <label for="route">Relacija / opis</label>
-            <input type="text" id="route" placeholder="npr. Aerodrom Beograd → Hotel Hyatt" oninput="render()">
+            <input type="text" id="route" placeholder="npr. Aerodrom Beograd → Hotel Hyatt" oninput="renderOffer()">
           </div>
           <div class="row2">
             <div class="field">
               <label for="qdate">Datum</label>
-              <input type="date" id="qdate" onchange="render()">
+              <input type="date" id="qdate" onchange="renderOffer()">
             </div>
             <div class="field">
               <label for="qnum">Ponuda br.</label>
-              <input type="text" id="qnum" oninput="render()">
+              <input type="text" id="qnum" oninput="renderOffer()">
             </div>
           </div>
           <div class="field">
+            <label for="discount">Popust na ukupno (%)</label>
+            <input type="number" id="discount" min="0" max="100" step="1" value="0" oninput="renderOffer()">
+            <div class="hint">Opciono – umanjuje ukupan iznos ponude.</div>
+          </div>
+          <div class="field">
             <label for="qnote">Napomena</label>
-            <textarea id="qnote" placeholder="npr. Doček sa tablom, voda u vozilu…" oninput="render()"></textarea>
+            <textarea id="qnote" placeholder="npr. Doček sa tablom, voda u vozilu…" oninput="renderOffer()"></textarea>
           </div>
 
         </div>
@@ -296,12 +311,11 @@
               <div class="m"><div class="k">Relacija</div><div class="v" id="oRoute">—</div></div>
             </div>
 
-            <div class="veh-band">
-              <div class="vn" id="oVehicle">—</div>
-              <div class="vs" id="oService">—</div>
-            </div>
-
+            <div class="stavke-head"><span>Stavke ponude</span><span>Cena</span></div>
             <table class="items" id="oItems"></table>
+            <div id="oEmpty" class="stavke-empty">Dodajte stavke u ponudu levo („＋ Dodaj stavku u ponudu").</div>
+
+            <div class="sumrows" id="oSums"></div>
 
             <div class="total-row">
               <div><div class="tl">Ukupno za naplatu</div><div class="alt" id="oAlt">—</div></div>
@@ -375,7 +389,7 @@ function loadData(){
 }
 function saveData(){ try{ localStorage.setItem(OVKEY, JSON.stringify(DATA)); }catch(e){} }
 var DATA = loadData();
-var state = { vehicle:0, mode:'hourly', currency:'eur', pt:'hourly', edit:false };
+var state = { vehicle:0, mode:'hourly', currency:'eur', pt:'hourly', edit:false, items:[] };
 
 var fmt = {
   eur: function(n){ return new Intl.NumberFormat('sr-RS',{maximumFractionDigits:0}).format(Math.round(n))+' €'; },
@@ -402,6 +416,7 @@ function init(){
   document.getElementById('qdate').value = t.toISOString().slice(0,10);
   document.getElementById('qnum').value = 'ECS-'+t.getFullYear()+'-'+String(Math.floor(t.getTime()/1000)%10000).padStart(4,'0');
   onVehicleChange();
+  renderOffer();
 }
 
 function currentVehicle(){ return DATA.vehicles[state.vehicle]; }
@@ -446,72 +461,92 @@ function setCurrency(c){
   document.getElementById('curEUR').classList.toggle('active', c==='eur');
   document.getElementById('curRSD').classList.toggle('active', c==='rsd');
   onVehicleChange(); // rebuild option labels with new currency
+  renderOffer();
   renderTable();
 }
 
-/* ============ QUOTE ============ */
-function computeQuote(){
-  var v = currentVehicle();
+/* ============ ITEM BUILDER ============ */
+function computeItem(){
+  var v = currentVehicle(); if(!v) return null;
   var base={eur:0,rsd:0}, includedKm=0, service='';
   if(state.mode==='hourly'){
     var h = parseInt(document.getElementById('hours').value,10);
     var tier = v.hourly.find(function(x){return x.h===h;}) || v.hourly[0];
+    if(!tier) return null;
     base={eur:tier.eur, rsd:tier.rsd}; includedKm=tier.km;
     service='Satni najam · '+tier.h+' h (uključeno '+tier.km+' km)';
   } else {
     var km = parseInt(document.getElementById('dayKm').value,10);
     var pack = v.day.find(function(x){return x.km===km;}) || v.day[0];
+    if(!pack) return null;
     base={eur:pack.eur, rsd:pack.rsd}; includedKm=pack.km;
     service='Dnevni najam · do 10h (uključeno '+pack.km+' km)';
   }
   var extraKm = Math.max(0, parseFloat(document.getElementById('extraKm').value)||0);
+  var qty = Math.max(1, Math.round(parseFloat(document.getElementById('qty').value)||1));
   var extra = { eur: extraKm*v.perKmEur, rsd: extraKm*v.perKmRsd };
-  var sub = { eur: base.eur+extra.eur, rsd: base.rsd+extra.rsd };
-  var discPct = Math.min(100, Math.max(0, parseFloat(document.getElementById('discount').value)||0));
-  var disc = { eur: sub.eur*discPct/100, rsd: sub.rsd*discPct/100 };
-  var total = { eur: sub.eur-disc.eur, rsd: sub.rsd-disc.rsd };
-  return {v:v, base:base, includedKm:includedKm, service:service, extraKm:extraKm, extra:extra, sub:sub, discPct:discPct, disc:disc, total:total};
+  var unit = { eur: base.eur+extra.eur, rsd: base.rsd+extra.rsd };
+  var line = { eur: unit.eur*qty, rsd: unit.rsd*qty };
+  return { vehicle:v.name, service:service, extraKm:extraKm, perKmEur:v.perKmEur, perKmRsd:v.perKmRsd, qty:qty, unit:unit, line:line };
 }
 
-function render(){
-  document.getElementById('hoursHint').innerHTML = state.mode==='hourly'
-    ? 'Uključena kilometraža: <b>'+ (currentVehicle().hourly.find(function(x){return x.h===parseInt(document.getElementById('hours').value,10);})||{km:'—'}).km +' km</b>' : '';
+function render(){ // builder-side updates (hints + add button)
   var v=currentVehicle();
+  document.getElementById('hoursHint').innerHTML = state.mode==='hourly'
+    ? 'Uključena kilometraža: <b>'+ (v.hourly.find(function(x){return x.h===parseInt(document.getElementById('hours').value,10);})||{km:'—'}).km +' km</b>' : '';
   document.getElementById('extraKmHint').innerHTML = 'Cena po km: <b>'+money(v[state.currency==='eur'?'perKmEur':'perKmRsd'], state.currency)+'</b>';
+  var it=computeItem(), cur=state.currency;
+  document.getElementById('btnAdd').textContent = it ? ('＋ Dodaj u ponudu · '+money(it.line[cur],cur)) : '＋ Dodaj stavku u ponudu';
+}
 
-  var q = computeQuote();
-  var cur = state.currency, other = cur==='eur'?'rsd':'eur';
+function addItem(){
+  var it=computeItem(); if(!it) return;
+  state.items.push(it);
+  renderOffer();
+  var b=document.getElementById('btnAdd'); b.textContent='✓ Dodato u ponudu'; setTimeout(render,1100);
+}
+function removeItem(i){ state.items.splice(i,1); renderOffer(); }
 
-  // header meta
+/* ============ OFFER ============ */
+function offerTotals(){
+  var sub={eur:0,rsd:0};
+  state.items.forEach(function(it){ sub.eur+=it.line.eur; sub.rsd+=it.line.rsd; });
+  var discPct=Math.min(100,Math.max(0,parseFloat(document.getElementById('discount').value)||0));
+  var disc={eur:sub.eur*discPct/100, rsd:sub.rsd*discPct/100};
+  var total={eur:sub.eur-disc.eur, rsd:sub.rsd-disc.rsd};
+  return {sub:sub, discPct:discPct, disc:disc, total:total};
+}
+function renderOffer(){
+  var cur=state.currency, other=cur==='eur'?'rsd':'eur';
   document.getElementById('oNum').textContent = document.getElementById('qnum').value || '—';
   var dv = document.getElementById('qdate').value;
   document.getElementById('oDate').textContent = dv ? dv.split('-').reverse().join('.')+'.' : '—';
   setV('oClient', document.getElementById('client').value);
   setV('oRoute', document.getElementById('route').value);
-  document.getElementById('oVehicle').textContent = v.name;
-  document.getElementById('oService').textContent = q.service;
 
-  // items
   var rows='';
-  rows += itemRow('Osnovna usluga', q.service, money(q.base[cur],cur));
-  if(q.extraKm>0)
-    rows += itemRow('Dodatni kilometri', q.extraKm+' km × '+money(v[cur==='eur'?'perKmEur':'perKmRsd'],cur), money(q.extra[cur],cur));
-  if(q.discPct>0){
-    rows += itemRow('Međuzbir','', money(q.sub[cur],cur));
-    rows += '<tr class="disc"><td class="desc">Popust '+q.discPct+'%</td><td class="r">− '+money(q.disc[cur],cur)+'</td></tr>';
-  }
+  state.items.forEach(function(it,i){
+    var desc='<b>'+(it.qty>1?it.qty+'× ':'')+escapeHtml(it.vehicle)+'</b><small>'+escapeHtml(it.service)+
+      (it.extraKm>0?' · +'+it.extraKm+' km ('+money(it[cur==='eur'?'perKmEur':'perKmRsd'],cur)+'/km)':'')+
+      (it.qty>1?' · '+money(it.unit[cur],cur)+' po vozilu':'')+'</small>';
+    rows+='<tr><td class="rm"><button class="rmbtn" title="Ukloni stavku" onclick="removeItem('+i+')">✕</button></td>'+
+      '<td class="desc">'+desc+'</td><td class="r">'+money(it.line[cur],cur)+'</td></tr>';
+  });
   document.getElementById('oItems').innerHTML = rows;
+  document.getElementById('oEmpty').style.display = state.items.length? 'none':'block';
 
-  document.getElementById('oTotal').textContent = money(q.total[cur],cur);
-  document.getElementById('oAlt').textContent = '≈ '+money(q.total[other],other);
+  var T=offerTotals(), sums='';
+  if(state.items.length && T.discPct>0){
+    sums+='<div class="sr"><span>Međuzbir</span><span>'+money(T.sub[cur],cur)+'</span></div>';
+    sums+='<div class="sr disc"><span>Popust '+T.discPct+'%</span><span>− '+money(T.disc[cur],cur)+'</span></div>';
+  }
+  document.getElementById('oSums').innerHTML=sums;
+  document.getElementById('oTotal').textContent = money(T.total[cur],cur);
+  document.getElementById('oAlt').textContent = state.items.length? '≈ '+money(T.total[other],other) : '—';
 
-  // note
-  var base = 'Ponuda je informativnog karaktera. Cene su iskazane u '+(cur==='eur'?'EUR':'RSD')+'. Svaki dodatni kilometar van paketa naplaćuje se '+money(v[cur==='eur'?'perKmEur':'perKmRsd'],cur)+'/km. Ponuda važi 7 dana od datuma izdavanja.';
-  var extra = document.getElementById('qnote').value.trim();
-  document.getElementById('oNote').innerHTML = (extra?'<b>Napomena:</b> '+escapeHtml(extra)+'<br><br>':'')+'<b>Uslovi:</b> '+base;
-}
-function itemRow(title, sub, val){
-  return '<tr><td class="desc">'+escapeHtml(title)+(sub?'<small>'+escapeHtml(sub)+'</small>':'')+'</td><td class="r">'+val+'</td></tr>';
+  var base='Ponuda je informativnog karaktera. Cene su iskazane u '+(cur==='eur'?'EUR':'RSD')+'. Svaki dodatni kilometar van paketa naplaćuje se prema važećem cenovniku. Ponuda važi 7 dana od datuma izdavanja.';
+  var extra=document.getElementById('qnote').value.trim();
+  document.getElementById('oNote').innerHTML=(extra?'<b>Napomena:</b> '+escapeHtml(extra)+'<br><br>':'')+'<b>Uslovi:</b> '+base;
 }
 function setV(id, val){
   var el=document.getElementById(id);
@@ -522,19 +557,22 @@ function escapeHtml(s){ return String(s).replace(/[&<>"]/g,function(c){return{'&
 
 /* ============ COPY ============ */
 function copyOffer(btn){
-  var q=computeQuote(), cur=state.currency, v=currentVehicle();
+  var cur=state.currency, other=cur==='eur'?'rsd':'eur';
   var L=[];
   L.push('ECS · EXECUTIVE CAR SERVICE — Ponuda za prevoz');
   L.push('Ponuda br.: '+(document.getElementById('qnum').value||'—')+'   Datum: '+document.getElementById('oDate').textContent);
   var cl=document.getElementById('client').value, rt=document.getElementById('route').value;
   if(cl) L.push('Klijent: '+cl);
   if(rt) L.push('Relacija: '+rt);
-  L.push('Vozilo: '+v.name);
-  L.push('Usluga: '+q.service);
-  L.push('Osnovna usluga: '+money(q.base[cur],cur));
-  if(q.extraKm>0) L.push('Dodatni km ('+q.extraKm+'): '+money(q.extra[cur],cur));
-  if(q.discPct>0) L.push('Popust '+q.discPct+'%: -'+money(q.disc[cur],cur));
-  L.push('UKUPNO: '+money(q.total[cur],cur)+'  (≈ '+money(q.total[cur==='eur'?'rsd':'eur'],cur==='eur'?'rsd':'eur')+')');
+  L.push('');
+  if(!state.items.length) L.push('(nema stavki)');
+  state.items.forEach(function(it,i){
+    L.push((i+1)+'. '+(it.qty>1?it.qty+'× ':'')+it.vehicle+' — '+it.service+(it.extraKm>0?' + '+it.extraKm+' km':'')+' : '+money(it.line[cur],cur));
+  });
+  var T=offerTotals();
+  L.push('');
+  if(T.discPct>0){ L.push('Međuzbir: '+money(T.sub[cur],cur)); L.push('Popust '+T.discPct+'%: -'+money(T.disc[cur],cur)); }
+  L.push('UKUPNO: '+money(T.total[cur],cur)+'  (≈ '+money(T.total[other],other)+')');
   var nt=document.getElementById('qnote').value.trim(); if(nt) L.push('Napomena: '+nt);
   L.push('ecs-serbia.com');
   var text=L.join('\n');
