@@ -301,7 +301,7 @@
               <span class="offer-logo">
                 <img id="offerLogo" alt="ECS – Executive Car Service">
               </span>
-              <span class="cap">Ponuda za prevoz</span>
+              <span class="cap">Ponuda za vrhunsko iskustvo</span>
             </div>
             <div class="no">Ponuda br.<br><b id="oNum">—</b><br><span id="oDate">—</span></div>
           </div>
@@ -318,7 +318,7 @@
             <div class="sumrows" id="oSums"></div>
 
             <div class="total-row">
-              <div><div class="tl">Ukupno za naplatu</div><div class="alt" id="oAlt">—</div></div>
+              <div><div class="tl">Ukupno za naplatu (sa PDV)</div><div class="alt" id="oAlt">—</div></div>
               <div class="tv" id="oTotal">—</div>
             </div>
 
@@ -383,6 +383,7 @@
 var OVKEY='ECS_PRICING_OVERRIDE_v1';
 var KM_ALLOC={1:25,2:50,3:75,4:100,5:125,6:150,7:175,8:200,9:200,10:200,11:200,12:200};
 var KMS_DAY=[250,300,350,400,450,500,550,600,650,700];
+var VAT_RATE=0.10;
 function loadData(){
   try{ var s=localStorage.getItem(OVKEY); if(s){ var d=JSON.parse(s); if(d&&d.vehicles&&d.vehicles.length) return d; } }catch(e){}
   return JSON.parse(JSON.stringify(window.ECS_PRICING));
@@ -513,8 +514,10 @@ function offerTotals(){
   state.items.forEach(function(it){ sub.eur+=it.line.eur; sub.rsd+=it.line.rsd; });
   var discPct=Math.min(100,Math.max(0,parseFloat(document.getElementById('discount').value)||0));
   var disc={eur:sub.eur*discPct/100, rsd:sub.rsd*discPct/100};
-  var total={eur:sub.eur-disc.eur, rsd:sub.rsd-disc.rsd};
-  return {sub:sub, discPct:discPct, disc:disc, total:total};
+  var net={eur:sub.eur-disc.eur, rsd:sub.rsd-disc.rsd};
+  var vat={eur:net.eur*VAT_RATE, rsd:net.rsd*VAT_RATE};
+  var total={eur:net.eur+vat.eur, rsd:net.rsd+vat.rsd};
+  return {sub:sub, discPct:discPct, disc:disc, net:net, vat:vat, total:total};
 }
 function renderOffer(){
   var cur=state.currency, other=cur==='eur'?'rsd':'eur';
@@ -536,15 +539,19 @@ function renderOffer(){
   document.getElementById('oEmpty').style.display = state.items.length? 'none':'block';
 
   var T=offerTotals(), sums='';
-  if(state.items.length && T.discPct>0){
-    sums+='<div class="sr"><span>Međuzbir</span><span>'+money(T.sub[cur],cur)+'</span></div>';
-    sums+='<div class="sr disc"><span>Popust '+T.discPct+'%</span><span>− '+money(T.disc[cur],cur)+'</span></div>';
+  if(state.items.length){
+    if(T.discPct>0){
+      sums+='<div class="sr"><span>Međuzbir</span><span>'+money(T.sub[cur],cur)+'</span></div>';
+      sums+='<div class="sr disc"><span>Popust '+T.discPct+'%</span><span>− '+money(T.disc[cur],cur)+'</span></div>';
+    }
+    sums+='<div class="sr"><span>Osnovica (bez PDV)</span><span>'+money(T.net[cur],cur)+'</span></div>';
+    sums+='<div class="sr"><span>PDV 10%</span><span>+ '+money(T.vat[cur],cur)+'</span></div>';
   }
   document.getElementById('oSums').innerHTML=sums;
   document.getElementById('oTotal').textContent = money(T.total[cur],cur);
   document.getElementById('oAlt').textContent = state.items.length? '≈ '+money(T.total[other],other) : '—';
 
-  var base='Ponuda je informativnog karaktera. Cene su iskazane u '+(cur==='eur'?'EUR':'RSD')+'. Svaki dodatni kilometar van paketa naplaćuje se prema važećem cenovniku. Ponuda važi 7 dana od datuma izdavanja.';
+  var base='Ponuda je informativnog karaktera. Cene su iskazane u '+(cur==='eur'?'EUR':'RSD')+' sa uračunatim PDV-om (10%). Svaki dodatni kilometar van paketa naplaćuje se prema važećem cenovniku. Ponuda važi 48h od izdavanja.';
   var extra=document.getElementById('qnote').value.trim();
   document.getElementById('oNote').innerHTML=(extra?'<b>Napomena:</b> '+escapeHtml(extra)+'<br><br>':'')+'<b>Uslovi:</b> '+base;
 }
@@ -559,7 +566,7 @@ function escapeHtml(s){ return String(s).replace(/[&<>"]/g,function(c){return{'&
 function copyOffer(btn){
   var cur=state.currency, other=cur==='eur'?'rsd':'eur';
   var L=[];
-  L.push('ECS · EXECUTIVE CAR SERVICE — Ponuda za prevoz');
+  L.push('ECS · EXECUTIVE CAR SERVICE — Ponuda za vrhunsko iskustvo');
   L.push('Ponuda br.: '+(document.getElementById('qnum').value||'—')+'   Datum: '+document.getElementById('oDate').textContent);
   var cl=document.getElementById('client').value, rt=document.getElementById('route').value;
   if(cl) L.push('Klijent: '+cl);
@@ -572,8 +579,11 @@ function copyOffer(btn){
   var T=offerTotals();
   L.push('');
   if(T.discPct>0){ L.push('Međuzbir: '+money(T.sub[cur],cur)); L.push('Popust '+T.discPct+'%: -'+money(T.disc[cur],cur)); }
-  L.push('UKUPNO: '+money(T.total[cur],cur)+'  (≈ '+money(T.total[other],other)+')');
+  L.push('Osnovica (bez PDV): '+money(T.net[cur],cur));
+  L.push('PDV 10%: +'+money(T.vat[cur],cur));
+  L.push('UKUPNO (sa PDV): '+money(T.total[cur],cur)+'  (≈ '+money(T.total[other],other)+')');
   var nt=document.getElementById('qnote').value.trim(); if(nt) L.push('Napomena: '+nt);
+  L.push('Ponuda važi 48h od izdavanja.');
   L.push('ecs-serbia.com');
   var text=L.join('\n');
   navigator.clipboard.writeText(text).then(function(){
