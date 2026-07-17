@@ -65,13 +65,15 @@ direktno u aplikaciji i izvezti `pricing.js`.
 
 ## Logo
 
-Koristi se **originalni ECS logo** (ugrađen u `index.html` kao `data:` URI, bez
-spoljnih zavisnosti — aplikacija ostaje jedan samostalan fajl). Izvorni fajl
-je `ecs-logo.webp` (isečena, transparentna verzija). Logo se prikazuje u
-zaglavlju aplikacije i kao memorandum na ponudi.
+Koristi se **zlatni ECS logo** (`Executive Car Service gold logo.png`), ugrađen u
+`index.html` kao `data:` URI (bez spoljnih zavisnosti — aplikacija ostaje jedan
+samostalan fajl). Optimizovana verzija je `ecs-logo-gold.webp`. Pošto je logo
+zlatan/svetao, stoji na **tamnim** pločicama — u zaglavlju aplikacije i kao
+memorandum na ponudi.
 
-Za zamenu logotipa: zamenite `ecs-logo.webp`, iskodirajte ga u base64 i
-zamenite vrednost konstante `ECS_LOGO` u `index.html`.
+Za zamenu logotipa: iskodirajte novu sliku u base64 i zamenite vrednost
+konstante `ECS_LOGO` u `index.html` (po potrebi prilagodite pozadinu pločica
+`.logo-plaque` / `.offer-logo`).
 
 ## Napomena o godini
 
