@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ECS · Executive Car Service — Kalkulator ponuda</title>
+<script>try{if(localStorage.getItem('ecs_auth')==='ok')document.documentElement.classList.add('authed');}catch(e){}</script>
 <style>
   :root{
     --gold:#D4AF37;
@@ -33,7 +34,29 @@
     min-height:100vh;
     line-height:1.45;
   }
-  .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px;display:none}
+  html.authed .wrap{display:block}
+
+  /* ---------- Login gate ---------- */
+  #loginOverlay{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:radial-gradient(900px 500px at 50% -10%,rgba(212,175,55,.10),transparent 60%),#0b0b0d}
+  html.authed #loginOverlay{display:none}
+  .login-card{width:100%;max-width:380px;background:linear-gradient(180deg,var(--card),var(--bg-2));border:1px solid var(--line-soft);
+    border-radius:18px;box-shadow:var(--shadow);padding:34px 30px;text-align:center}
+  .login-logo{width:190px;height:auto;display:block;margin:0 auto 18px;background:#0f0f12;border:1px solid rgba(212,175,55,.22);border-radius:12px;padding:12px 18px}
+  .login-card h1{margin:0 0 4px;font-size:1.1rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:800}
+  .login-card p{margin:0 0 22px;color:var(--muted);font-size:.82rem}
+  .login-card label{display:block;text-align:left;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .login-card input{width:100%;background:var(--card-2);border:1px solid var(--line-soft);color:var(--ink);border-radius:10px;
+    padding:12px 13px;font-size:.95rem;font-family:inherit;outline:none;margin-bottom:16px;transition:.15s}
+  .login-card input:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+  .login-err{min-height:18px;color:#e0533d;font-size:.8rem;text-align:left;margin:-6px 0 12px;font-weight:600}
+  .login-card button{width:100%;border:0;border-radius:11px;padding:13px;font-size:.92rem;font-weight:800;cursor:pointer;
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#1a1408;transition:.16s}
+  .login-card button:hover{filter:brightness(1.06)}
+  .login-note{margin-top:16px;color:var(--muted-2);font-size:.68rem;line-height:1.5}
+  .logout-btn{border:1px solid var(--line-soft);background:var(--card);color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:.78rem;font-weight:600}
+  .logout-btn:hover{border-color:#e0533d;color:#e0533d}
 
   /* ---------- Top bar ---------- */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:26px}
@@ -188,6 +211,23 @@
 </style>
 </head>
 <body>
+
+<!-- ================= LOGIN GATE ================= -->
+<div id="loginOverlay">
+  <form class="login-card" onsubmit="return doLogin(event)">
+    <img class="login-logo" id="loginLogo" alt="ECS – Executive Car Service">
+    <h1>Prijava</h1>
+    <p>Pristup je ograničen na ovlašćene korisnike.</p>
+    <label for="loginEmail">Email</label>
+    <input type="email" id="loginEmail" autocomplete="username" placeholder="ime@ecs-serbia.com" required>
+    <label for="loginPass">Lozinka</label>
+    <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••" required>
+    <div class="login-err" id="loginErr"></div>
+    <button type="submit">Prijavi se</button>
+    <div class="login-note">ECS · Executive Car Service — interni alat za ponude.</div>
+  </form>
+</div>
+
 <div class="wrap">
 
   <!-- ================= TOP BAR ================= -->
@@ -207,6 +247,7 @@
         <button id="curEUR" class="active" onclick="setCurrency('eur')">EUR €</button>
         <button id="curRSD" onclick="setCurrency('rsd')">RSD</button>
       </div>
+      <button class="logout-btn" onclick="logout()" title="Odjava">Odjava</button>
     </div>
   </div>
 
@@ -379,6 +420,49 @@
 
 <script src="pricing.js"></script>
 <script>
+/* ============ LOGIN GATE (soft, client-side) ============ */
+var AUTH_EMAIL='zvjetrovic@ecs-serbia.com';
+var AUTH_HASH='33fada98b16d65e3fb91ddc9a9f47b512a0765b59b3f309a71c0416c229f63f7';
+/* compact SHA-256 (Geraint Luff, public domain) */
+function sha256(ascii){
+  function rr(v,a){return (v>>>a)|(v<<(32-a));}
+  var mp=Math.pow,mw=mp(2,32),i,j,result='',words=[],asciiBL=ascii.length*8;
+  var hash=sha256.h=sha256.h||[],k=sha256.k=sha256.k||[],pc=k.length,ic={};
+  for(var c=2;pc<64;c++){ if(!ic[c]){ for(i=0;i<313;i+=c)ic[i]=c; hash[pc]=(mp(c,.5)*mw)|0; k[pc++]=(mp(c,1/3)*mw)|0; } }
+  ascii+='\x80'; while(ascii.length%64-56)ascii+='\x00';
+  for(i=0;i<ascii.length;i++){ j=ascii.charCodeAt(i); if(j>>8)return; words[i>>2]|=j<<((3-i)%4)*8; }
+  words[words.length]=(asciiBL/mw)|0; words[words.length]=asciiBL;
+  for(j=0;j<words.length;){
+    var w=words.slice(j,j+=16),oldHash=hash; hash=hash.slice(0,8);
+    for(i=0;i<64;i++){
+      var w15=w[i-15],w2=w[i-2],a=hash[0],e=hash[4];
+      var t1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^((~e)&hash[6]))+k[i]
+        +(w[i]=(i<16)?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
+      var t2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+      hash=[(t1+t2)|0].concat(hash); hash[4]=(hash[4]+t1)|0;
+    }
+    for(i=0;i<8;i++)hash[i]=(hash[i]+oldHash[i])|0;
+  }
+  for(i=0;i<8;i++)for(j=3;j+1;j--){ var b=(hash[i]>>(j*8))&255; result+=((b<16)?0:'')+b.toString(16); }
+  return result;
+}
+function doLogin(e){
+  e.preventDefault();
+  var email=(document.getElementById('loginEmail').value||'').trim().toLowerCase();
+  var pass=document.getElementById('loginPass').value||'';
+  if(email===AUTH_EMAIL && sha256(pass)===AUTH_HASH){
+    try{ localStorage.setItem('ecs_auth','ok'); }catch(err){}
+    document.documentElement.classList.add('authed');
+    document.getElementById('loginErr').textContent='';
+    document.getElementById('loginPass').value='';
+  } else {
+    document.getElementById('loginErr').textContent='Pogrešan email ili lozinka.';
+    document.getElementById('loginPass').value='';
+  }
+  return false;
+}
+function logout(){ try{ localStorage.removeItem('ecs_auth'); }catch(e){} document.documentElement.classList.remove('authed'); location.reload(); }
+
 /* ============ STATE ============ */
 var OVKEY='ECS_PRICING_OVERRIDE_v1';
 var KM_ALLOC={1:25,2:50,3:75,4:100,5:125,6:150,7:175,8:200,9:200,10:200,11:200,12:200};
@@ -408,6 +492,7 @@ function populateVehicles(){
   sel.value=String(state.vehicle);
 }
 function init(){
+  document.getElementById('loginLogo').src = document.getElementById('brandLogo').src;
   populateVehicles();
   // defaults
   var t=new Date();

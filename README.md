@@ -19,6 +19,20 @@ napravljen na osnovu zvaničnog cenovnika (`cenovnik_2025.xlsx`).
   Dugmad **Štampaj / PDF** (štampa samo ponudu) i **Kopiraj tekst**.
 - **Cenovnik** — kompletna tabela svih vozila (satni i dnevni najam), u izabranoj valuti.
 
+## Prijava (pristup)
+
+Aplikacija ima ekran za prijavu — pristupa se samo sa ovlašćenim nalogom
+(email + lozinka). Nakon prijave stanje se pamti u pregledaču (dugme
+**Odjava** je gore desno). Lozinka se ne čuva kao čist tekst, već samo njen
+SHA-256 heš.
+
+> ⚠️ **Bezbednosna napomena:** ovo je statična HTML aplikacija bez servera, pa
+> je prijava „meka" zaštita — sprečava slučajan pristup, ali je nije nemoguće
+> zaobići (ko ima fajl može da vidi kod). Za pravu zaštitu potreban je server
+> sa autentikacijom ili hosting sa lozinkom (npr. HTTP Basic Auth / zaštićena
+> zona na sajtu). Nalog/lozinku menjate u `index.html`: `AUTH_EMAIL` i
+> `AUTH_HASH` (SHA-256 heš nove lozinke).
+
 ## Pokretanje
 
 Nije potreban server — dovoljno je otvoriti `index.html` u pregledaču
