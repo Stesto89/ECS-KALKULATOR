@@ -33,6 +33,7 @@
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
     line-height:1.45;
+    overflow-x:hidden;
   }
   .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px;display:none}
   html.authed .wrap{display:block}
@@ -77,9 +78,9 @@
 
   /* ---------- Layout ---------- */
   .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:22px;align-items:start}
-  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  @media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
 
-  .card{background:linear-gradient(180deg,var(--card),var(--bg-2));border:1px solid var(--line-soft);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card{background:linear-gradient(180deg,var(--card),var(--bg-2));border:1px solid var(--line-soft);border-radius:var(--radius);box-shadow:var(--shadow);min-width:0}
   .card-head{padding:18px 22px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:10px}
   .card-head h2{margin:0;font-size:.82rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700}
   .card-body{padding:20px 22px}
@@ -196,6 +197,20 @@
 
   .foot{text-align:center;color:var(--muted-2);font-size:.74rem;margin-top:34px;letter-spacing:.04em}
   .foot a{color:var(--gold);text-decoration:none}
+
+  /* ---------- Mobile ---------- */
+  @media (max-width:560px){
+    .wrap{padding:16px 12px 48px}
+    .offer-head{flex-wrap:wrap;gap:12px;padding:18px}
+    .offer-logo img{width:150px}
+    .offer-head .no{text-align:left;width:100%;border-top:1px solid rgba(255,255,255,.1);padding-top:10px}
+    .offer-body{padding:18px}
+    .card-body{padding:18px}
+    .card-head{padding:16px 18px}
+    .brand{gap:12px}
+    .logo{width:150px}
+    .total-row .tv{font-size:1.6rem}
+  }
 
   /* ---------- Print ---------- */
   @media print{
